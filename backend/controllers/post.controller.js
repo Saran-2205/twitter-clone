@@ -5,7 +5,6 @@ import { v2 as cloudinary } from "cloudinary";
 
 
 export const getAllPosts=async(req,res)=>{
-    console.log("getAllPosts route hit");
     try {
         const posts=await Post.find().sort({createdAt:-1}).populate({
             path:"user",
