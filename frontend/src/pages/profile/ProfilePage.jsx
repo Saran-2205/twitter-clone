@@ -24,7 +24,7 @@ const ProfilePage = () => {
 
 	const {username}=useParams()
 
-	const isMyProfile = true;
+	const{data:authUser}=useQuery({queryKey:['authUser']})
 
 	const {data:user,isLoading,refetch,isRefetching}=useQuery({
 		queryKey: ["userProfile"],
@@ -42,11 +42,10 @@ const ProfilePage = () => {
 		}
 	})
 
+	const isMyProfile = authUser._id===user?._id;
+	
 	const memberSinceDate=formatMemberSinceDate(user?.createdAt)
 
-	useEffect(()=>{
-		refetch();
-	},[username,refetch,username])
 
 	const handleImgChange = (e, state) => {
 		const file = e.target.files[0];
@@ -59,6 +58,11 @@ const ProfilePage = () => {
 			reader.readAsDataURL(file);
 		}
 	};
+
+	
+	useEffect(()=>{
+		refetch();
+	},[username,refetch,username])
 
 	return (
 		<>
