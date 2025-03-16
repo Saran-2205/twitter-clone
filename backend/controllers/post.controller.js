@@ -170,38 +170,38 @@ export const createComment = async (req, res) => {
 export const likeUnlikePost = async (req, res) => {
     try {
         const { id: postId } = req.params;
-        const userId = req.user._id; // Keep as ObjectId
+    const userId = req.user._id; // Keep as ObjectId
 
-        let post = await Post.findById(postId);
+    let post = await Post.findById(postId);
 
-        if (!post) {
-            return res.status(404).json({ message: 'Post not found' });
-        }
+    if (!post) {
+        return res.status(404).json({ message: 'Post not found' });
+    }
 
-        const userLikedPost = post.likes.some((like) => like._id.equals(userId));
+    const userLikedPost = post.likes.some((like) => like._id.equals(userId));
 
-        if (userLikedPost) {
-            // Unlike post
-            await Post.updateOne({ _id: postId }, { $pull: { likes: { _id: userId } } });
-            await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
-        } else {
-            // Like post
-            post.likes.push({ _id: userId });  // Push as an object to match existing structure
-            await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
+    if (userLikedPost) {
+        // Unlike post
+        await Post.updateOne({ _id: postId }, { $pull: { likes: { _id: userId } } });
+        await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
+    } else {
+        // Like post
+        post.likes.push({ _id: userId });  // Push as an object to match existing structure
+        await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
 
-            const notification = new Notification({
-                from: userId,
-                to: post.user,
-                type: "like",
-            });
-            await notification.save();
+        const notification = new Notification({
+            from: userId,
+            to: post.user,
+            type: "like",
+        });
+        await notification.save();
 
-            await post.save(); // Ensure in-memory object is synced with DB
-        }
+        await post.save(); // Ensure in-memory object is synced with DB
+    }
 
-        // Refetch the updated post to ensure fresh data
-        const updatedPost = await Post.findById(postId);
-        res.status(200).json(updatedPost.likes);
+    // Refetch the updated post to ensure fresh data
+    const updatedPost = await Post.findById(postId);
+    res.status(200).json(updatedPost.likes);
     } catch (error) {
         console.log("Error in likeUnlikePost controller: ", error);
         res.status(500).json({ error: "Internal server error" });
