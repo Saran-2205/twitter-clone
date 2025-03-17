@@ -47,51 +47,54 @@ export const getSuggestedUsers = async (req, res) => {
 };
 
 export const followUnFollowUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userToModify = await User.findById(id);
-    const currentUser = await User.findById(req.user._id);
+	try {
+		const { id } = req.params;
+		const userToModify = await User.findById(id);
+		const currentUser = await User.findById(req.user._id);
 
-    if (id === req.user._id.toString()) {
-      return res
-        .status(400)
-        .json({ error: "You cannot follow/unfollow yourself" });
-    }
+		if (id === req.user._id.toString()) {
+			return res.status(400).json({ error: "You can't follow/unfollow yourself" });
+		}
 
-    if (!userToModify || !currentUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
+		if (!userToModify || !currentUser) return res.status(400).json({ error: "User not found" });
 
-    const isFollowing = currentUser.following.includes(id);
+		const isFollowing = currentUser.following.includes(id);
 
-    if (isFollowing) {
-      //Unfollow
-      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
-      //TODO: return the id of the user as a response
-      res.status(200).json({ message: "User unfollowed successfully" });
-    } else {
-      //Follow
-      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
-      //send notification to the user
-      const newNotification = new Notification({
-        from: req.user._id,
-        to: userToModify._id,
-        type: "follow",
-        read: false,
-      });
+		if (isFollowing) {
+			// Unfollow the user
+			await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+			await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
 
-      //TODO: return the id of the user as a response
-      await newNotification.save();
+			return res.status(200).json({
+				message: "User unfollowed successfully",
+				isFollowing: false,       // Add this
+				userId: id                // Add this for easier cache updates
+			});
+		} else {
+			// Follow the user
+			await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
+			await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
 
-      res.status(200).json({ message: "User followed successfully" });
-    }
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-    console.log("Error in followUnFollowUser Controller", error.message);
-  }
+			// Send notification to the user
+			const newNotification = new Notification({
+				type: "follow",
+				from: req.user._id,
+				to: userToModify._id,
+			});
+			await newNotification.save();
+
+			return res.status(200).json({
+				message: "User followed successfully",
+				isFollowing: true,        // Add this
+				userId: id                // Add this for easier cache updates
+			});
+		}
+	} catch (error) {
+		console.log("Error in followUnfollowUser: ", error.message);
+		res.status(500).json({ error: error.message });
+	}
 };
+
 
 export const updateUserProfile = async (req, res) => {
   const { username, fullName, email, bio, link, currentPassword, newPassword } =
@@ -166,6 +169,6 @@ export const updateUserProfile = async (req, res) => {
     return res.status(200).json(user);
   } catch (error) {
     res.status(500).json({ error: error.message });
-    console.log("Error in updateUserProfile Controller", error.message);
+    console.log("Error in updateUserProfile Controller", error);
   }
 };
