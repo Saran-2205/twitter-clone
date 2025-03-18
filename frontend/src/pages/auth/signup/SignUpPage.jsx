@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 
@@ -11,6 +11,7 @@ import { MdDriveFileRenameOutline } from "react-icons/md";
 import toast from "react-hot-toast";
 
 const SignUpPage = () => {
+	const navigate=useNavigate();
 	const [formData, setFormData] = useState({
 		email: "",
 		username: "",
@@ -42,6 +43,7 @@ const SignUpPage = () => {
 		},
 		onSuccess:()=>{
 			toast.success("Account created successfully")
+			navigate('/login')
 		}
 	})
 

@@ -20,6 +20,11 @@ export const signup=async(req,res)=>{
         if(existingEmail){
             return res.status(400).json({error:"Email is already taken"})
         };
+
+        if(!fullName||!username||!email||!password){
+            return res.status(400).json({error:"All fields are required for signup"})
+        };
+
         if(password.length<6){
             return res.status(400).json({error:"Password must be at least 6 characters long"})
         }
